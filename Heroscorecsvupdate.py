@@ -24,22 +24,20 @@ default_factors = {
 # File uploader widget
 uploaded_file = st.file_uploader("Upload CSV file", type=["csv"])
 
-# Initialize DataFrame for CSV data
+# Initialize DataFrame and factors
 if uploaded_file is not None:
-    # Read the uploaded CSV file
     df = pd.read_csv(uploaded_file)
-
+    
     # Ensure all required columns are present in the DataFrame
-    missing_columns = set(default_factors.keys()) - set(df.columns)
-    if missing_columns:
-        st.warning(f"Uploaded CSV is missing columns: {', '.join(missing_columns)}")
+    if not all(col in df.columns for col in default_factors.keys()):
+        st.warning("Uploaded CSV is missing some required columns.")
         st.stop()
 
-    # Use the uploaded CSV values for factors if they exist
+    # Initialize factors from the uploaded CSV
     factors = {key: {"score": df[key].iloc[0] if key in df.columns else 0, "weight": value["weight"]}
                for key, value in default_factors.items()}
 else:
-    # Set up factors from Streamlit inputs
+    # Initialize factors from Streamlit inputs
     factors = {key: {"score": st.number_input(key, min_value=0, value=0), "weight": value["weight"]}
                for key, value in default_factors.items()}
 
