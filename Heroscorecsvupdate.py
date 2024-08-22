@@ -6,7 +6,7 @@ st.title("Hero Score Calculator")
 # File uploader widget
 uploaded_file = st.file_uploader("Upload CSV file", type=["csv"])
 
-# Initialize factors dictionary
+# Define default factors
 default_factors = {
     "Apprenticeship Badges": {"score": 0, "weight": 0.3},
     "Art Badges": {"score": 0, "weight": 0.07},
@@ -24,85 +24,22 @@ default_factors = {
     "Capstone Badges": {"score": 0, "weight": 0.01}
 }
 
-# Initialize DataFrame
-df = pd.DataFrame(columns=default_factors.keys())
-
-# Handle CSV upload
+# Initialize DataFrame with the correct columns
 if uploaded_file is not None:
-    # Read the uploaded CSV file
     df = pd.read_csv(uploaded_file)
-    st.write("Uploaded CSV data:")
-    st.write(df)
-
-    # Ensure the DataFrame has required columns
+    
+    # Ensure all required columns are present in the DataFrame
     missing_columns = set(default_factors.keys()) - set(df.columns)
     if missing_columns:
         st.warning(f"Uploaded CSV is missing columns: {', '.join(missing_columns)}")
         st.stop()
 
-    # Update factors with values from the uploaded CSV
+    # Use the first row of the uploaded CSV for factors values
     factors = {key: {"score": df[key].iloc[0] if key in df.columns else 0, "weight": value["weight"]}
                for key, value in default_factors.items()}
 else:
-    # Set up factors from Streamlit inputs
-    factors = {
-        "Apprenticeship Badges": {
-            "score": st.number_input("Apprenticeship Badges", min_value=0, value=0, max_value=4),
-            "weight": 0.3
-        },
-        "Art Badges": {
-            "score": st.number_input("Art Badges", min_value=0, max_value=1),
-            "weight": 0.07
-        },
-        "Civilization Badges": {
-            "score": st.number_input("Civilization Badges", min_value=0, max_value=4),
-            "weight": 0.01
-        },
-        "Grammar Badges": {
-            "score": st.number_input("Grammar Badges", min_value=0, max_value=1),
-            "weight": 0.01
-        },
-        "Math Badges": {
-            "score": st.number_input("Math Badges", min_value=0, max_value=5),
-            "weight": 0.01
-        },
-        "Next Great Adventure Badges": {
-            "score": st.number_input("Next Great Adventure Badges", min_value=0, max_value=5),
-            "weight": 0.01
-        },
-        "PE Badges": {
-            "score": st.number_input("PE Badges", min_value=0, max_value=5),
-            "weight": 0.01
-        },
-        "Quests Badges": {
-            "score": st.number_input("Quests Badges", min_value=0, max_value=11),
-            "weight": 0.01
-        },
-        "Reading Badges": {
-            "score": st.number_input("Reading Badges", min_value=0, max_value=15),
-            "weight": 0.01
-        },
-        "Foreign Language Badges": {
-            "score": st.number_input("Foreign Language Badges", min_value=0, max_value=3),
-            "weight": 0.01
-        },
-        "Science Badges": {
-            "score": st.number_input("Science Badges", min_value=0, max_value=6),
-            "weight": 0.01
-        },
-        "Servant Leader Badges": {
-            "score": st.number_input("Servant Leader Badges", min_value=0, max_value=4),
-            "weight": 0.01
-        },
-        "Genre Badges": {
-            "score": st.number_input("Genre Badges", min_value=0, max_value=20),
-            "weight": 0.01
-        },
-        "Capstone Badges": {
-            "score": st.number_input("Capstone Badges", min_value=0, max_value=1),
-            "weight": 0.01
-        }
-    }
+    factors = {key: {"score": st.number_input(key, min_value=0, value=0), "weight": value["weight"]}
+               for key, value in default_factors.items()}
 
 # Calculate Hero Score
 hero_score = 0
@@ -132,19 +69,19 @@ else:
 st.markdown(f"<h3 style='text-align: center;'>You are a {hero_level}!</h3>", unsafe_allow_html=True)
 
 # Create a DataFrame to save the new values
-data = {"Hero Score": [hero_score]}
+data = {**{key: [factor["score"]] for key, factor in factors.items()}, "Hero Score": [hero_score]}
 df_new = pd.DataFrame(data)
 
-# Append new score to the DataFrame if a file was uploaded, else create new
+# Append new score to the DataFrame if a file was uploaded, else use new DataFrame
 if uploaded_file is not None:
-    df = df.append(df_new, ignore_index=True)
+    df_combined = pd.concat([df, df_new], ignore_index=True)
 else:
-    df = df_new
+    df_combined = df_new
 
 # Provide the updated CSV file for download
 st.download_button(
     label="Download Updated CSV",
-    data=df.to_csv(index=False),
+    data=df_combined.to_csv(index=False),
     file_name='updated_hero_score.csv',
     mime='text/csv'
 )
