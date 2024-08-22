@@ -6,25 +6,48 @@ st.title("Hero Score Calculator")
 # File uploader widget
 uploaded_file = st.file_uploader("Upload CSV file", type=["csv"])
 
-# Initialize a DataFrame for the CSV data
+# Initialize factors dictionary
+default_factors = {
+    "Apprenticeship Badges": {"score": 0, "weight": 0.3},
+    "Art Badges": {"score": 0, "weight": 0.07},
+    "Civilization Badges": {"score": 0, "weight": 0.01},
+    "Grammar Badges": {"score": 0, "weight": 0.01},
+    "Math Badges": {"score": 0, "weight": 0.01},
+    "Next Great Adventure Badges": {"score": 0, "weight": 0.01},
+    "PE Badges": {"score": 0, "weight": 0.01},
+    "Quests Badges": {"score": 0, "weight": 0.01},
+    "Reading Badges": {"score": 0, "weight": 0.01},
+    "Foreign Language Badges": {"score": 0, "weight": 0.01},
+    "Science Badges": {"score": 0, "weight": 0.01},
+    "Servant Leader Badges": {"score": 0, "weight": 0.01},
+    "Genre Badges": {"score": 0, "weight": 0.01},
+    "Capstone Badges": {"score": 0, "weight": 0.01}
+}
+
+# Initialize DataFrame
+df = pd.DataFrame(columns=default_factors.keys())
+
+# Handle CSV upload
 if uploaded_file is not None:
     # Read the uploaded CSV file
     df = pd.read_csv(uploaded_file)
     st.write("Uploaded CSV data:")
     st.write(df)
 
-    # Check if specific columns exist in the DataFrame
-    if not set(factors.keys()).issubset(df.columns):
-        st.warning("Uploaded CSV does not contain all required columns.")
+    # Ensure the DataFrame has required columns
+    missing_columns = set(default_factors.keys()) - set(df.columns)
+    if missing_columns:
+        st.warning(f"Uploaded CSV is missing columns: {', '.join(missing_columns)}")
         st.stop()
 
-    # Use uploaded CSV values as default
-    factors = {k: {"score": df[k].values[0] if k in df.columns else 0, "weight": v["weight"]} for k, v in factors.items()}
+    # Update factors with values from the uploaded CSV
+    factors = {key: {"score": df[key].iloc[0] if key in df.columns else 0, "weight": value["weight"]}
+               for key, value in default_factors.items()}
 else:
-    # Default values for number inputs
+    # Set up factors from Streamlit inputs
     factors = {
         "Apprenticeship Badges": {
-            "total_badges": st.number_input("Apprenticeship Badges", min_value=0, value=0, max_value=4),
+            "score": st.number_input("Apprenticeship Badges", min_value=0, value=0, max_value=4),
             "weight": 0.3
         },
         "Art Badges": {
@@ -85,7 +108,7 @@ else:
 hero_score = 0
 for factor_name, factor_data in factors.items():
     if factor_name == "Apprenticeship Badges":
-        nga_badge_score = (factor_data["total_badges"] / 4) * 100  # Example: 4 badges = 100%
+        nga_badge_score = (factor_data["score"] / 4) * 100  # Example: 4 badges = 100%
         hero_score += nga_badge_score * factor_data["weight"]
     else:
         hero_score += factor_data["score"] * factor_data["weight"]
@@ -112,7 +135,7 @@ st.markdown(f"<h3 style='text-align: center;'>You are a {hero_level}!</h3>", uns
 data = {"Hero Score": [hero_score]}
 df_new = pd.DataFrame(data)
 
-# Save the updated hero score to CSV
+# Append new score to the DataFrame if a file was uploaded, else create new
 if uploaded_file is not None:
     df = df.append(df_new, ignore_index=True)
 else:
