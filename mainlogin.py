@@ -161,3 +161,4 @@ if __name__ == "__main__":
     logged_in_user = login_page()
     if logged_in_user:
         hero_score_page(logged_in_user)
+        logged_in_user = None  # Clear the user after the first login
