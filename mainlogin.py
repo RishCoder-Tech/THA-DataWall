@@ -5,14 +5,27 @@ from streamlit import session_state as ss
 st.title("Hero Score Calculator")
 
 # Login prompt
-if "logged_in" not in ss:
-    ss.logged_in = False
-    user_name = st.text_input("Enter your name:")
-    if st.button("Login"):
-        ss.user_name = user_name
-        ss.logged_in = True
+if "logged_in" not in st.session_state:
+    st.session_state.logged_in = False
 
-if ss.logged_in:
+
+def login():
+    st.write("# Welcome ! 👋")
+    form = st.form("my_form")
+    username = form.text_input("Username", value='')
+    pwd = form.text_input("Password", value='', type="password")
+    if form.form_submit_button("Login"):
+        if username=="admin" and pwd=="admin":
+            st.session_state.logged_in = True
+            st.rerun()
+        else: 
+            st.error("Username or password error", icon="⚠️")
+
+def logout():
+    st.session_state.logged_in = False
+    st.rerun()
+
+if st.session_state.logged_in:
     st.title(f"Hero Score Calculator - Welcome, {ss.user_name}!")
 
     # Define factors and their weights
