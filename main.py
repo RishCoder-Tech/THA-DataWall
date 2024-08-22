@@ -97,9 +97,9 @@ data = {"Hero Score": [hero_score]}
 df = pd.DataFrame(data)
 df.to_csv("hero_score.csv", index=False) 
 
-    st.download_button(
-        label="Download Hero Score",
-        data=df.to_csv(index=False),
-        file_name='hero_score.csv',
-        mime='text/csv'
-    )
+st.download_button(
+    label="Download Hero Score",
+    data=df.to_csv(index=False),
+    file_name='hero_score.csv',
+    mime='text/csv'
+)
